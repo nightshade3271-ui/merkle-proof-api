@@ -1,0 +1,26 @@
+{
+  "name": "merkle-proof-api",
+  "version": "1.0.0",
+  "description": "Cryptographic Binary Merkle Tree & Audit Proof Engine (RFC 9162 / RFC 6962 Domain-Separated Inclusion Proofs, Constant-Time Verification & Append-Only Consistency Prover)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "merkle-tree",
+    "merkle-proof",
+    "cryptography",
+    "rfc9162",
+    "rfc6962",
+    "audit-trail",
+    "tamper-evident",
+    "inclusion-proof",
+    "consistency-proof",
+    "sha256",
+    "verifiable-data-structures",
+    "certificate-transparency"
+  ],
+  "author": "MerkleProof Cryptographic Engineering",
+  "license": "MIT"
+}

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MerkleProof API — Binary Merkle Tree & Cryptographic Audit Proof Engine</title>
+  <link rel="icon" type="image/png" href="/logo.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+    .glow-emerald { box-shadow: 0 0 30px -5px rgba(16, 185, 129, 0.28); }
+    .glow-cyan { box-shadow: 0 0 30px -5px rgba(6, 182, 212, 0.28); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-emerald-500 selection:text-black">
+
+  <!-- Top Sticky Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <img src="/logo.png" alt="MerkleProof Logo" class="h-9 w-9 rounded-lg object-cover shadow-md shadow-emerald-500/20 border border-emerald-500/30" onerror="this.style.display='none'">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-extrabold text-lg text-white tracking-tight">MerkleProof<span class="text-emerald-400">API</span></span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono">v1.0.0</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">RFC 9162 Binary Merkle Trees & Cryptographic Audit Proofs</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1.5"></span> Tree Engine Online
+        </span>
+        <a href="#endpoints" class="text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          API Specs
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+
+    <!-- Hero Section -->
+    <div class="text-center max-w-3xl mx-auto space-y-4">
+      <div class="flex justify-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+          🌳 RFC 9162 • Second Preimage Defense • O(log N) Inclusion Proofs
+        </span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+        Verifiable Cryptographic Proofs <br>
+        <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+          For Tamper-Evident Data Structures
+        </span>
+      </h1>
+      <p class="text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+        Ingest records, construct binary Merkle trees, generate compact inclusion audit paths, and mathematically prove historical consistency without exposing confidential data.
+      </p>
+    </div>
+
+    <!-- Live Interactive Console Card -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 glow-emerald">
+      
+      <!-- Console Header & Tab Selector -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+            <span>⚡ Interactive Merkle Proof Console</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Construct trees, extract inclusion audit paths, and test constant-time verification live.</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2 text-xs font-mono" id="tabButtons">
+          <button onclick="switchTab('tree')" id="tab-tree" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+            1. Tree Builder
+          </button>
+          <button onclick="switchTab('proof')" id="tab-proof" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-750">
+            2. Inclusion Proof
+          </button>
+          <button onclick="switchTab('verify')" id="tab-verify" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-750">
+            3. Proof Verifier
+          </button>
+          <button onclick="switchTab('consistency')" id="tab-consistency" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-750">
+            4. Append-Only Prover
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 1: TREE BUILDER -->
+      <div id="panel-tree" class="pt-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Dataset Items (One per line)</label>
+              <textarea id="tree-items" rows="6" class="w-full p-3 bg-slate-950 border border-slate-700 rounded-lg text-xs text-emerald-300 font-mono">transaction_block_001
+transaction_block_002
+transaction_block_003
+transaction_block_004</textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Hash Algorithm</label>
+                <select id="tree-algorithm" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-300 font-mono">
+                  <option value="sha256" selected>SHA-256 (RFC 9162 Standard)</option>
+                  <option value="sha512">SHA-512</option>
+                  <option value="sha384">SHA-384</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Odd Leaf Handling</label>
+                <select id="tree-odd" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-300 font-mono">
+                  <option value="false" selected>Promote (RFC 9162)</option>
+                  <option value="true">Duplicate (Bitcoin Style)</option>
+                </select>
+              </div>
+            </div>
+            <button onclick="runBuildTree()" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-sm transition shadow-lg shadow-emerald-600/30">
+              Construct Merkle Tree & Root Hash
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-medium text-slate-300">Computed Merkle Root Hash</span>
+                <span id="tree-badge" class="text-2xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono">Ready</span>
+              </div>
+              <textarea id="tree-result" readonly class="w-full h-24 p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-emerald-400 focus:outline-none resize-none leading-relaxed"></textarea>
+            </div>
+            <div>
+              <span class="text-xs font-medium text-slate-300 mb-1 block">Tree Structure Metadata</span>
+              <pre id="tree-meta" class="p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 overflow-x-auto">-- Click construct to generate metadata</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: INCLUSION PROOF -->
+      <div id="panel-proof" class="pt-6 space-y-6 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Target Leaf Item or Index</label>
+              <input type="text" id="proof-target" value="0" placeholder="Index (e.g. 0) or exact text" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-emerald-300 font-mono">
+            </div>
+            <button onclick="runGenerateProof()" class="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-lg text-sm transition shadow-lg shadow-teal-600/30">
+              Extract Inclusion Audit Path (O(log N))
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <span class="text-xs font-medium text-slate-300 mb-1 block">Audit Sibling Steps</span>
+              <div id="proof-steps" class="h-48 overflow-y-auto p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-emerald-300 space-y-2">
+                <span class="text-slate-500 text-xs italic">Generate a proof to view sibling hashes...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: PROOF VERIFIER -->
+      <div id="panel-verify" class="pt-6 space-y-6 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Target Record Item</label>
+              <input type="text" id="verify-item" value="transaction_block_001" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-emerald-300 font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Expected Root Hash</label>
+              <input type="text" id="verify-root" placeholder="Root hash or leave blank to test against current tree" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-300 font-mono">
+            </div>
+            <button onclick="runVerifyProof()" class="w-full py-2.5 px-4 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg text-sm transition shadow-lg shadow-cyan-600/30">
+              Verify Proof in Constant Time
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <span class="text-xs font-medium text-slate-300 mb-1 block">Verification Status</span>
+              <div id="verify-status" class="p-6 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-center min-h-[140px]">
+                <span class="text-xs text-slate-500">Run verification to inspect result</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: CONSISTENCY PROVER -->
+      <div id="panel-consistency" class="pt-6 space-y-6 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Earlier Snapshot Size (M)</label>
+              <input type="number" id="consistency-m" value="2" min="1" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-emerald-300 font-mono">
+            </div>
+            <button onclick="runConsistencyProof()" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-sm transition shadow-lg shadow-indigo-600/30">
+              Generate Append-Only Consistency Proof
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <span class="text-xs font-medium text-slate-300 mb-1 block">Consistency Proof Result</span>
+              <pre id="consistency-result" class="p-4 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-emerald-400 overflow-x-auto">--</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Core Features Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="p-6 rounded-xl bg-slate-900/60 border border-slate-800">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4 font-mono font-bold">
+          01
+        </div>
+        <h3 class="text-sm font-bold text-white mb-2">RFC 9162 Domain Separation</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Protects against second preimage attacks by applying a 0x00 prefix to all leaf nodes and 0x01 to all internal branch hashes.
+        </p>
+      </div>
+
+      <div class="p-6 rounded-xl bg-slate-900/60 border border-slate-800">
+        <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-4 font-mono font-bold">
+          02
+        </div>
+        <h3 class="text-sm font-bold text-white mb-2">Logarithmic Audit Proofs</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Prove that any record belongs to a dataset containing millions of items using only O(log2 N) hashes (~640 bytes for 1M records).
+        </p>
+      </div>
+
+      <div class="p-6 rounded-xl bg-slate-900/60 border border-slate-800">
+        <div class="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 mb-4 font-mono font-bold">
+          03
+        </div>
+        <h3 class="text-sm font-bold text-white mb-2">Append-Only Consistency</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Mathematically prove that updated logs grew strictly in an append-only sequence without historical records being deleted or modified.
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick API Specs Table -->
+    <div id="endpoints" class="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+      <h3 class="text-sm font-bold text-white mb-4">REST API Endpoints Overview</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs font-mono">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800 text-left">
+              <th class="pb-2">Method</th>
+              <th class="pb-2">Endpoint</th>
+              <th class="pb-2">Description</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 text-slate-300">
+            <tr>
+              <td class="py-2.5 text-emerald-400 font-bold">POST</td>
+              <td class="py-2.5">/v1/merkle/tree</td>
+              <td class="py-2.5 text-slate-400">Ingest array of items/hashes and compute root fingerprint</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 text-emerald-400 font-bold">POST</td>
+              <td class="py-2.5">/v1/merkle/proof</td>
+              <td class="py-2.5 text-slate-400">Generate compact O(log N) binary inclusion audit path for specified target</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 text-emerald-400 font-bold">POST</td>
+              <td class="py-2.5">/v1/merkle/verify</td>
+              <td class="py-2.5 text-slate-400">Constant-time verification of an inclusion proof against an expected root</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 text-emerald-400 font-bold">POST</td>
+              <td class="py-2.5">/v1/merkle/consistency</td>
+              <td class="py-2.5 text-slate-400">Generate append-only consistency proof between tree size snapshots</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 text-cyan-400 font-bold">GET</td>
+              <td class="py-2.5">/health</td>
+              <td class="py-2.5 text-slate-400">Cryptographic engine diagnostics, uptime, and RFC specifications</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-slate-900 bg-slate-950 py-8 text-center text-xs text-slate-500 font-mono space-y-2">
+    <div>MerkleProof API • Binary Merkle Tree & Audit Proof Engine • MIT License</div>
+    <div class="text-slate-600 max-w-2xl mx-auto text-[11px] leading-relaxed">
+      Disclaimer: This API provides cryptographic and mathematical hashing primitives for developer utility. Application developers and subscribing organizations are solely responsible for their own key custody, infrastructure security, and implementation. Provided "AS IS" without warranty of any kind.
+    </div>
+  </footer>
+
+  <script>
+    let latestProof = null;
+    let latestRoot = null;
+
+    function switchTab(tabId) {
+      ['tree', 'proof', 'verify', 'consistency'].forEach(t => {
+        document.getElementById(`panel-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`tab-${t}`);
+        btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-750';
+      });
+      document.getElementById(`panel-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-${tabId}`);
+      activeBtn.className = 'px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+    }
+
+    function getItemsArray() {
+      return document.getElementById('tree-items').value
+        .split('\n')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+    }
+
+    async function runBuildTree() {
+      const items = getItemsArray();
+      const algorithm = document.getElementById('tree-algorithm').value;
+      const duplicateOdd = document.getElementById('tree-odd').value === 'true';
+
+      try {
+        const res = await fetch('/v1/merkle/tree', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items, algorithm, duplicate_odd: duplicateOdd })
+        });
+        const json = await res.json();
+        if (json.success) {
+          latestRoot = json.data.root_hash;
+          document.getElementById('tree-result').value = json.data.root_hash;
+          document.getElementById('tree-badge').innerText = `Depth: ${json.data.tree_depth} | Leaves: ${json.data.leaf_count}`;
+          document.getElementById('tree-meta').innerText = JSON.stringify(json.data, null, 2);
+          document.getElementById('verify-root').value = json.data.root_hash;
+        }
+      } catch (err) {
+        document.getElementById('tree-result').value = 'Error: ' + err.message;
+      }
+    }
+
+    async function runGenerateProof() {
+      const items = getItemsArray();
+      let targetInput = document.getElementById('proof-target').value.trim();
+      let target = /^\d+$/.test(targetInput) ? parseInt(targetInput, 10) : targetInput;
+
+      try {
+        const res = await fetch('/v1/merkle/proof', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items, target })
+        });
+        const json = await res.json();
+        if (json.success) {
+          latestProof = json.data.audit_path;
+          latestRoot = json.data.root_hash;
+          const container = document.getElementById('proof-steps');
+          container.innerHTML = '';
+          json.data.audit_path.forEach((step, idx) => {
+            const stepDiv = document.createElement('div');
+            stepDiv.className = 'p-2 rounded bg-slate-900 border border-slate-800 flex items-center justify-between text-xs';
+            stepDiv.innerHTML = `
+              <span class="text-slate-400">Step ${idx + 1} (${step.position}):</span>
+              <span class="text-emerald-400 font-mono">${step.hash.substring(0, 16)}...${step.hash.substring(48)}</span>
+            `;
+            container.appendChild(stepDiv);
+          });
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function runVerifyProof() {
+      const item = document.getElementById('verify-item').value;
+      const expectedRoot = document.getElementById('verify-root').value.trim() || latestRoot;
+
+      try {
+        const res = await fetch('/v1/merkle/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ item, audit_path: latestProof, expected_root: expectedRoot })
+        });
+        const json = await res.json();
+        const statusDiv = document.getElementById('verify-status');
+        if (json.success && json.data.valid) {
+          statusDiv.innerHTML = `
+            <div class="text-center text-emerald-400">
+              <div class="font-bold text-sm">✅ CRYPTOGRAPHIC INCLUSION VERIFIED</div>
+              <div class="text-xs text-slate-400 mt-1">Constant-time proof chain matched root hash perfectly.</div>
+            </div>
+          `;
+        } else {
+          statusDiv.innerHTML = `
+            <div class="text-center text-red-400">
+              <div class="font-bold text-sm">❌ VERIFICATION FAILED (MISMATCH)</div>
+              <div class="text-xs text-slate-400 mt-1">Item or audit path does not match expected root.</div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function runConsistencyProof() {
+      const items = getItemsArray();
+      const previousSize = parseInt(document.getElementById('consistency-m').value, 10);
+
+      try {
+        const res = await fetch('/v1/merkle/consistency', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items, previous_size: previousSize })
+        });
+        const json = await res.json();
+        if (json.success) {
+          document.getElementById('consistency-result').innerText = JSON.stringify(json.data, null, 2);
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    // Auto-build tree on load
+    window.addEventListener('DOMContentLoaded', () => {
+      runBuildTree().then(() => runGenerateProof());
+    });
+  </script>
+</body>
+</html>

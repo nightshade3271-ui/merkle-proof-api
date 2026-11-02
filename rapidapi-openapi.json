@@ -1,0 +1,313 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MerkleProof API — Binary Merkle Tree & Cryptographic Audit Proof Engine",
+    "description": "High-performance cryptographic binary Merkle tree engine implementing RFC 9162 (Verifiable Data Structures) and RFC 6962 domain separation (0x00 leaf / 0x01 internal node prefixes). Ingests arrays of data records or pre-computed hashes, computes deterministic Merkle roots, generates O(log N) inclusion audit proofs, verifies integrity in constant time, and proves append-only log consistency without exposing entire datasets.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "MerkleProof Engineering Team",
+      "email": "support@merkleproof.dev"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://merkle-proof-api.vercel.app",
+      "description": "Production Vercel Edge Serverless Gateway"
+    },
+    {
+      "url": "http://localhost:3017",
+      "description": "Local Development Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Merkle Tree Construction",
+      "description": "Builds domain-separated binary Merkle trees and calculates root hashes"
+    },
+    {
+      "name": "Inclusion Proofs (Audit Paths)",
+      "description": "Generates O(log N) binary audit trails proving item membership in a dataset"
+    },
+    {
+      "name": "Proof Verification",
+      "description": "Constant-time cryptographic verification of inclusion proofs against expected roots"
+    },
+    {
+      "name": "Consistency Proofs (Append-Only)",
+      "description": "Proves newer logs contain older logs as unmodified prefixes"
+    },
+    {
+      "name": "System Health",
+      "description": "Engine diagnostics, supported hash algorithms, and RFC specifications"
+    }
+  ],
+  "paths": {
+    "/v1/merkle/tree": {
+      "post": {
+        "tags": ["Merkle Tree Construction"],
+        "summary": "Construct Binary Merkle Tree & Root Hash",
+        "description": "Ingests an array of strings, JSON objects, or hex digests. Computes leaf hashes with RFC 9162 domain separation (0x00 prefix) and combines internal nodes (0x01 prefix) into a deterministic Merkle root.",
+        "operationId": "buildTree",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Array of records, strings, JSON objects, or hex hashes to ingest",
+                    "example": ["event_log_alpha", "event_log_beta", "event_log_gamma", "event_log_delta"]
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "enum": ["sha256", "sha512", "sha384"],
+                    "default": "sha256",
+                    "example": "sha256"
+                  },
+                  "is_already_hashed": {
+                    "type": "boolean",
+                    "description": "Set to true if items are already 32-byte hex hashes",
+                    "default": false
+                  },
+                  "duplicate_odd": {
+                    "type": "boolean",
+                    "description": "Duplicate right sibling for odd leaf levels (Bitcoin-style) or promote (RFC 9162 style)",
+                    "default": false
+                  },
+                  "include_levels": {
+                    "type": "boolean",
+                    "description": "Include intermediate tree level hashes in response",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Merkle tree constructed successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "root_hash": "2f6c91a3b849204481d6fbb6b38c29db26c8dfb295f1906969cf1639d48b1111",
+                    "leaf_count": 4,
+                    "tree_depth": 2,
+                    "algorithm": "sha256",
+                    "rfc_standard": "RFC 9162 / RFC 6962 Domain Separation",
+                    "note": "The root hash serves as a tamper-evident cryptographic fingerprint representing the entire dataset."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/merkle/proof": {
+      "post": {
+        "tags": ["Inclusion Proofs (Audit Paths)"],
+        "summary": "Generate Inclusion Proof (Audit Path)",
+        "description": "Generates a compact O(log N) binary audit trail for a specified item or leaf index. Proves membership in the Merkle root without revealing any other entries in the dataset.",
+        "operationId": "generateProof",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Complete dataset array",
+                    "example": ["event_log_alpha", "event_log_beta", "event_log_gamma", "event_log_delta"]
+                  },
+                  "target": {
+                    "description": "Index number (e.g. 0) or exact item value to prove",
+                    "example": 0
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "enum": ["sha256", "sha512", "sha384"],
+                    "default": "sha256"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Inclusion proof generated",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "target_index": 0,
+                    "leaf_hash": "4e1a0b...",
+                    "root_hash": "2f6c91...",
+                    "algorithm": "sha256",
+                    "proof_length": 2,
+                    "audit_path": [
+                      { "position": "right", "hash": "9c82f1..." },
+                      { "position": "right", "hash": "d17a3b..." }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/merkle/verify": {
+      "post": {
+        "tags": ["Proof Verification"],
+        "summary": "Verify Inclusion Proof in Constant Time",
+        "description": "Evaluates an inclusion audit path from leaf to root and validates equality against the expected root hash using constant-time timingSafeEqual comparison.",
+        "operationId": "verifyProof",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "item": {
+                    "type": "string",
+                    "description": "Original item string or leaf hash",
+                    "example": "event_log_alpha"
+                  },
+                  "audit_path": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "position": { "type": "string", "enum": ["left", "right"] },
+                        "hash": { "type": "string" }
+                      }
+                    },
+                    "description": "Array of sibling steps from /v1/merkle/proof"
+                  },
+                  "expected_root": {
+                    "type": "string",
+                    "description": "Known Merkle root to prove membership against"
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "default": "sha256"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification result",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "valid": true,
+                    "computed_root": "2f6c91a3b8...",
+                    "expected_root": "2f6c91a3b8...",
+                    "steps_evaluated": 2,
+                    "verification_method": "crypto.timingSafeEqual (constant-time)"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/merkle/consistency": {
+      "post": {
+        "tags": ["Consistency Proofs (Append-Only)"],
+        "summary": "Generate Append-Only Consistency Proof",
+        "description": "Proves that an earlier tree of size M is an exact, unmodified prefix of the current tree of size N per RFC 9162 Section 2.1.4, guaranteeing log entries were never reordered or altered.",
+        "operationId": "generateConsistency",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Current full dataset (size N)",
+                    "example": ["tx_001", "tx_002", "tx_003", "tx_004", "tx_005", "tx_006"]
+                  },
+                  "previous_size": {
+                    "type": "integer",
+                    "description": "Size of earlier snapshot (M <= N)",
+                    "example": 4
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "default": "sha256"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Consistency proof generated",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "previous_size": 4,
+                    "current_size": 6,
+                    "previous_root": "a7b3c9...",
+                    "current_root": "f4e19d...",
+                    "proof_length": 2,
+                    "consistency_proof": ["9d81b...", "2a1c7..."],
+                    "verified_append_only": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["System Health"],
+        "summary": "API Health & Cryptographic Diagnostics",
+        "description": "Returns engine status, RFC compliance standards, and supported hash algorithms.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Diagnostics and uptime",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "healthy",
+                  "service": "MerkleProof Cryptographic Binary Tree & Proof Engine API",
+                  "version": "1.0.0",
+                  "uptime_seconds": 120.5
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

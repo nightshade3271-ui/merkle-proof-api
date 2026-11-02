@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/v1/merkle/tree", "destination": "/api/tree" },
+    { "source": "/v1/merkle/proof", "destination": "/api/proof" },
+    { "source": "/v1/merkle/verify", "destination": "/api/verify" },
+    { "source": "/v1/merkle/consistency", "destination": "/api/consistency" },
+    { "source": "/health", "destination": "/api/index" },
+    { "source": "/api/health", "destination": "/api/index" },
+    { "source": "/logo.png", "destination": "/logo.png" }
+  ]
+}
