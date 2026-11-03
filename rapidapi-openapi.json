@@ -11,12 +11,8 @@
   },
   "servers": [
     {
-      "url": "https://merkle-proof-api-nyx-nightshades-projects.vercel.app",
-      "description": "Production Vercel Serverless Gateway"
-    },
-    {
       "url": "https://merkle-proof-api.vercel.app",
-      "description": "Custom Production Domain"
+      "description": "Production Vercel Serverless Gateway"
     },
     {
       "url": "http://localhost:3017",
