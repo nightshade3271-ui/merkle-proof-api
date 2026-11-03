@@ -48,3 +48,4 @@ module.exports = async function handler(req, res) {
     return sendError(res, 500, 'Failed to generate consistency proof', err.message);
   }
 };
+

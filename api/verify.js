@@ -57,3 +57,4 @@ module.exports = async function handler(req, res) {
     return sendError(res, 500, 'Verification error', err.message);
   }
 };
+

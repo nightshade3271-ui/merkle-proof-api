@@ -84,3 +84,4 @@ When an auditor or user requests verification of record `event_log_482`:
 ## 5. Disclaimer & Limitation of Liability
 
 This API is a developer utility providing mathematical and cryptographic hashing functions. Subscribing developers and integrating systems are solely responsible for their own application architecture, cryptographic key custody, access controls, and data management. The software and services are provided "AS IS", without warranty of any kind, express or implied.
+
